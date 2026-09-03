@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>생성형 AI · LLM 플래시카드</title>
+<style>
+  :root{
+    --bg: #15123B;
+    --blue: #0057FF;
+    --blue-deep: #0038B8;
+    --pink: #FF2E7E;
+    --pink-deep: #D40F5C;
+    --yellow: #FFD400;
+    --green: #00D68F;
+    --ink: #101014;
+    --paper: #FFFFFF;
+  }
+  *{ box-sizing:border-box; }
+  html, body{
+    margin:0; padding:0; height:100%;
+    background:
+      radial-gradient(circle 3px at 20px 20px, rgba(255,255,255,0.08) 2px, transparent 3px),
+      radial-gradient(circle 3px at 60px 60px, rgba(255,255,255,0.08) 2px, transparent 3px),
+      var(--bg);
+    background-size: 80px 80px, 80px 80px, auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans KR", sans-serif;
+    color: var(--paper);
+  }
+  .stage{
+    min-height: 100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 36px 16px 28px;
+    gap: 22px;
+  }
+
+  .deck-title{ text-align:center; }
+  .deck-title .badge{
+    display:inline-block;
+    background: var(--yellow);
+    color: var(--ink);
+    font-weight: 800;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 2.5px solid var(--ink);
+    margin-bottom: 12px;
+    transform: rotate(-2deg);
+  }
+  .deck-title h1{
+    margin:0;
+    font-size: clamp(24px, 4.4vw, 32px);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--paper);
+  }
+
+  .card-wrap{
+    perspective: 1700px;
+    width: min(560px, 92vw);
+    height: min(370px, 64vw);
+  }
+  .card{
+    position:relative;
+    width:100%; height:100%;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(.34,1.56,.64,1);
+    cursor:pointer;
+  }
+  .card.flipped{ transform: rotateY(180deg); }
+
+  .face{
+    position:absolute; inset:0;
+    backface-visibility:hidden;
+    border-radius: 20px;
+    border: 4px solid var(--ink);
+    box-shadow: 9px 9px 0 var(--ink);
+    display:flex;
+    flex-direction:column;
+    padding: 22px 26px 24px;
+  }
+  .face.front{ background: var(--blue); }
+  .face.back{
+    transform: rotateY(180deg);
+    background: var(--pink);
+  }
+
+  .face .meta{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    margin-bottom: 12px;
+  }
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background: rgba(255,255,255,0.16);
+    border: 2px solid rgba(255,255,255,0.55);
+    color: var(--paper);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    padding: 4px 11px;
+    border-radius: 999px;
+  }
+  .qa-tag{
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--yellow);
+    color: var(--ink);
+    font-weight: 900;
+    font-size: 14px;
+    display:flex; align-items:center; justify-content:center;
+    border: 2.5px solid var(--ink);
+  }
+  .face.back .qa-tag{ background: var(--green); }
+
+  .qa-body{
+    flex:1;
+    display:flex;
+    align-items:center;
+    overflow-y:auto;
+  }
+  .prompt-text{
+    margin:0;
+    font-size: clamp(18px, 2.7vw, 22px);
+    font-weight: 800;
+    line-height: 1.4;
+    color: var(--paper);
+  }
+  .options{
+    list-style:none;
+    margin: 16px 0 0;
+    padding:0;
+    display:grid;
+    gap: 8px;
+  }
+  .options li{
+    display:flex;
+    align-items:flex-start;
+    gap: 10px;
+    background: rgba(255,255,255,0.94);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 2px solid var(--ink);
+  }
+  .opt-letter{
+    flex: 0 0 auto;
+    width: 20px; height:20px;
+    border-radius: 6px;
+    background: var(--blue);
+    color: #fff;
+    font-weight: 800;
+    font-size: 11.5px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .answer-text{
+    font-size: 19px;
+    font-weight: 800;
+    margin: 0 0 10px;
+    color: var(--paper);
+    background: rgba(255,255,255,0.16);
+    border: 2px solid rgba(255,255,255,0.55);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .explain-text{
+    font-size: 14.5px;
+    font-weight: 500;
+    line-height: 1.55;
+    color: #FFF6FA;
+  }
+
+  .hint{
+    text-align:center;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 0.01em;
+  }
+
+  .controls{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content:center;
+  }
+  .ctrl-btn{
+    border: 3px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor:pointer;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .ctrl-btn:hover{ transform: translate(-1px,-1px); box-shadow: 5px 5px 0 var(--ink); }
+  .ctrl-btn:active{ transform: translate(3px,3px); box-shadow: 1px 1px 0 var(--ink); }
+  .ctrl-btn.primary{ background: var(--yellow); }
+  .ctrl-btn.accent{ background: var(--green); }
+
+  .progress-row{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 9px;
+  }
+  .dots{ display:flex; gap: 8px; }
+  .dot{
+    width: 10px; height:10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    border: 2px solid rgba(255,255,255,0.35);
+  }
+  .dot.active{ background: var(--yellow); border-color: var(--ink); }
+  .counter{
+    font-size: 12.5px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.75);
+  }
+
+  @media (max-width: 480px){
+    .face{ padding: 18px 18px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="deck-title">
+    <span class="badge">STUDY DECK · 5 CARDS</span>
+    <h1>생성형 AI · LLM · 모델과 도구</h1>
+  </div>
+
+  <div class="card-wrap">
+    <div class="card" id="card">
+      <div class="face front">
+        <div class="meta">
+          <span class="pill">카드 <span id="cardNoFront">1</span> / 5</span>
+          <span class="qa-tag">Q</span>
+        </div>
+        <div class="qa-body">
+          <div>
+            <p class="prompt-text" id="promptText"></p>
+            <ul class="options" id="optionsList"></ul>
+          </div>
+        </div>
+      </div>
+      <div class="face back">
+        <div class="meta">
+          <span class="pill">카드 <span id="cardNoBack">1</span> / 5</span>
+          <span class="qa-tag" id="answerLetterTag">A</span>
+        </div>
+        <div class="qa-body">
+          <div>
+            <p class="answer-text" id="answerText"></p>
+            <p class="explain-text" id="explainText"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint">카드를 클릭하거나 Space Bar를 눌러 뒤집기 · ← → 로 이동</p>
+
+  <div class="controls">
+    <button class="ctrl-btn" id="prevBtn">◀ 이전</button>
+    <button class="ctrl-btn primary" id="flipBtn">뒤집기</button>
+    <button class="ctrl-btn" id="nextBtn">다음 ▶</button>
+    <button class="ctrl-btn accent" id="shuffleBtn">🔀 섞기</button>
+  </div>
+
+  <div class="progress-row">
+    <div class="dots" id="dots"></div>
+    <div class="counter" id="counter">1 / 5</div>
+  </div>
+</div>
+
+<script>
+  const CARDS = [
+    {
+      prompt: "생성형 AI와 LLM은 어떤 관계인가?",
+      options: [
+        "대등한 별개의 개념",
+        "LLM은 생성형 AI의 하위 개념(텍스트 담당)",
+        "생성형 AI는 LLM의 하위 개념",
+        "LLM은 사라진 기술"
+      ],
+      answer: "LLM은 생성형 AI의 하위 개념(텍스트 담당)",
+      explain: "생성형 AI는 텍스트·이미지·음악·영상 등 콘텐츠 생성 기술 전체를 아우르는 상위 개념이고, LLM은 그중 텍스트(언어)를 다루는 하위 기술이다."
+    },
+    {
+      prompt: "다음 중 생성형 AI이지만 LLM은 아닌 것은?",
+      options: ["ChatGPT", "Claude", "Stable Diffusion", "GPT-4"],
+      answer: "Stable Diffusion",
+      explain: "Stable Diffusion은 이미지 생성 모델로 생성형 AI에 해당하지만 텍스트를 다루는 LLM은 아니다."
+    },
+    {
+      prompt: "생성형 AI '모델'과 '도구'의 차이는?",
+      options: [
+        "모델=UI, 도구=파라미터",
+        "모델=핵심 엔진, 도구=사람이 쓰는 완성 제품",
+        "완전히 같은 개념",
+        "모델은 항상 유료, 도구는 항상 무료"
+      ],
+      answer: "모델=핵심 엔진, 도구=사람이 쓰는 완성 제품",
+      explain: "모델은 아키텍처와 파라미터로 구성된 핵심 엔진(예: GPT-4, Claude)이고, 도구는 모델에 UI와 부가 기능을 더해 사람이 쓸 수 있게 만든 제품(예: ChatGPT 웹앱)이다."
+    },
+    {
+      prompt: "\"클로드(Claude)\"는 무엇을 가리키는가?",
+      options: [
+        "오직 모델만",
+        "오직 도구만",
+        "맥락에 따라 모델과 도구 둘 다",
+        "이미지 생성 전용 모델"
+      ],
+      answer: "맥락에 따라 모델과 도구 둘 다",
+      explain: "Claude Sonnet 5 등은 모델을, claude.ai 인터페이스는 도구를 가리킨다. 두 의미 모두로 쓰인다."
+    },
+    {
+      prompt: "같은 Claude 모델이 여러 도구에 탑재될 수 있다는 것이 의미하는 바는?",
+      options: [
+        "모델과 도구는 1:1로만 대응",
+        "하나의 모델이 여러 제품(도구)에 활용 가능",
+        "도구가 바뀌면 모델 성능도 바뀜",
+        "모델은 도구 없이 존재 불가"
+      ],
+      answer: "하나의 모델이 여러 제품(도구)에 활용 가능",
+      explain: "모델은 API 형태로 여러 도구(Claude.ai, 데스크톱 앱, 서드파티 앱 등)에 동일하게 탑재될 수 있다."
+    }
+  ];
+
+  const LETTERS = ["A", "B", "C", "D", "E"];
+
+  let order = CARDS.map((_, i) => i);
+  let pos = 0;
+  let flipped = false;
+
+  const card = document.getElementById('card');
+  const promptText = document.getElementById('promptText');
+  const optionsList = document.getElementById('optionsList');
+  const answerText = document.getElementById('answerText');
+  const explainText = document.getElementById('explainText');
+  const answerLetterTag = document.getElementById('answerLetterTag');
+  const cardNoFront = document.getElementById('cardNoFront');
+  const cardNoBack = document.getElementById('cardNoBack');
+  const counter = document.getElementById('counter');
+  const dotsWrap = document.getElementById('dots');
+
+  function buildDots(){
+    dotsWrap.innerHTML = '';
+    CARDS.forEach(() => {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      dotsWrap.appendChild(d);
+    });
+  }
+
+  function render(){
+    const idx = order[pos];
+    const data = CARDS[idx];
+    promptText.textContent = data.prompt;
+    optionsList.innerHTML = data.options.map((o, i) =>
+      `<li><span class="opt-letter">${LETTERS[i]}</span><span>${o}</span></li>`
+    ).join('');
+
+    const correctIdx = data.options.findIndex(o => o === data.answer);
+    const correctLetter = correctIdx >= 0 ? LETTERS[correctIdx] : '';
+    answerLetterTag.textContent = correctLetter || 'A';
+    answerText.textContent = correctLetter ? `${correctLetter}. ${data.answer}` : data.answer;
+    explainText.textContent = data.explain;
+    cardNoFront.textContent = pos + 1;
+    cardNoBack.textContent = pos + 1;
+    counter.textContent = `${pos + 1} / ${CARDS.length}`;
+    [...dotsWrap.children].forEach((d, i) => d.classList.toggle('active', i === pos));
+
+    card.classList.remove('flipped');
+    flipped = false;
+  }
+
+  function flip(){
+    flipped = !flipped;
+    card.classList.toggle('flipped', flipped);
+  }
+  function next(){ pos = (pos + 1) % CARDS.length; render(); }
+  function prev(){ pos = (pos - 1 + CARDS.length) % CARDS.length; render(); }
+  function shuffle(){
+    for (let i = order.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    pos = 0;
+    render();
+  }
+
+  card.addEventListener('click', flip);
+  document.getElementById('flipBtn').addEventListener('click', flip);
+  document.getElementById('nextBtn').addEventListener('click', next);
+  document.getElementById('prevBtn').addEventListener('click', prev);
+  document.getElementById('shuffleBtn').addEventListener('click', shuffle);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space'){ e.preventDefault(); flip(); }
+    else if (e.code === 'ArrowRight'){ next(); }
+    else if (e.code === 'ArrowLeft'){ prev(); }
+  });
+
+  buildDots();
+  render();
+</script>
+</body>
+</html>
